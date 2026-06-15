@@ -1,6 +1,10 @@
 import gspread
+import os
+import json
+import tempfile
 from google.oauth2.service_account import Credentials
 from google_play_scraper import reviews, Sort
+
 
 PACKAGE_NAMES = [
     
@@ -33,8 +37,19 @@ SCOPES = [
 # GOOGLE SHEETS SETUP
 # ==========================
 
+service_account_info = json.loads(
+    os.environ["GOOGLE_SERVICE_ACCOUNT"]
+)
+
+with tempfile.NamedTemporaryFile(
+    mode="w",
+    delete=False
+) as f:
+    json.dump(service_account_info, f)
+    temp_json = f.name
+
 credentials = Credentials.from_service_account_file(
-    "service_account.json",
+    temp_json,
     scopes=SCOPES
 )
 
