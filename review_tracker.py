@@ -49,8 +49,21 @@ apps_sheet = spreadsheet.worksheet("Apps")
 reviews_sheet = spreadsheet.worksheet("Reviews")
 
 apps = apps_sheet.get_all_records()
-# Existing review IDs already in sheet
-existing_ids = set(reviews_sheet.col_values(4))
+
+# ==========================
+# ENSURE HEADERS EXIST
+# ==========================
+
+HEADERS = ["Platform", "App Name", "Identifier", "User Name", "Review ID", "Rating", "Review", "Date"]
+
+first_row = reviews_sheet.row_values(1)
+if first_row != HEADERS:
+    reviews_sheet.clear()
+    reviews_sheet.append_row(HEADERS)
+    print("Headers written to Reviews sheet.")
+
+# Existing review IDs already in sheet (now in column 5)
+existing_ids = set(reviews_sheet.col_values(5))
 
 # ==========================
 # FETCH iOS TOKEN
@@ -210,8 +223,8 @@ for app in apps:
                 "iOS",
                 app_name,
                 identifier,
-                review_id,
                 r.get("userName", ""),
+                review_id,
                 r.get("rating", ""),
                 r.get("review", ""),
                 r.get("date", ""),
@@ -326,8 +339,8 @@ for app in apps:
             "Android",
             app_name,
             package_name,
-            review_id,
             review.get("userName", ""),
+            review_id,
             review.get("score", ""),
             review.get("content", ""),
             str(review.get("at", ""))
