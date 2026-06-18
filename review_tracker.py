@@ -5,57 +5,53 @@ import tempfile
 from google.oauth2.service_account import Credentials
 from google_play_scraper import reviews, Sort
 
-
-PACKAGE_NAMES = [
-    
-]
-
-import gspread
-from google.oauth2.service_account import Credentials
-from google_play_scraper import reviews, Sort
-
-# ==========================
-# CONFIGURATION
-# ==========================
-
-PACKAGE_NAMES = [
-    "com.spill.sticker.color.book",
-    "com.spill.math.puzzle.games.crossmath.number.free",
-    "com.spill.bird.rescue.jam.sort.puzzle",
-    "com.spill.grill.master.sort.food.games.cooking.match.puzzle",
-    "com.spill.cozy.finds.hidden.objects"
-]
-
-SHEET_NAME = "Game Reviews"
-
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-# ==========================
-# GOOGLE SHEETS SETUP
-# ==========================
+SHEET_NAME = "Game Reviews"
 
-service_account_info = json.loads(
-    os.environ["GOOGLE_SERVICE_ACCOUNT"]
-)
+if os.path.exists("service_account.json"):
+    print("Using local service account file")
 
-with tempfile.NamedTemporaryFile(
-    mode="w",
-    delete=False
-) as f:
-    json.dump(service_account_info, f)
-    temp_json = f.name
+    credentials = Credentials.from_service_account_file(
+        "service_account.json",
+        scopes=SCOPES
+    )
 
-credentials = Credentials.from_service_account_file(
-    temp_json,
-    scopes=SCOPES
-)
+else:
+    print("Using GitHub Secret")
+
+    service_account_info = json.loads(
+        os.environ["GOOGLE_SERVICE_ACCOUNT"]
+    )
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        delete=False
+    ) as f:
+        json.dump(service_account_info, f)
+        temp_json = f.name
+
+    credentials = Credentials.from_service_account_file(
+        temp_json,
+        scopes=SCOPES
+    )
 
 gc = gspread.authorize(credentials)
 
 sheet = gc.open(SHEET_NAME).sheet1
+
+GAMES = {
+    "com.spill.sticker.color.book" : "Sticker",
+    "com.spill.math.puzzle.games.crossmath.number.free" : "Zmc",
+    "com.spill.bird.rescue.jam.sort.puzzle" : "Dragon Rescue",
+    "com.spill.grill.master.sort.food.games.cooking.match.puzzle" : "Grill Sort",
+    "com.spill.cozy.finds.hidden.objects" : "Hidden Objects"
+}
+
+
 
 # Create headers if sheet is empty
 if not sheet.cell(1, 1).value:
@@ -69,7 +65,7 @@ if not sheet.cell(1, 1).value:
     ])
 
 # Existing review IDs already in sheet
-existing_ids = set(sheet.col_values(2))
+existing_ids = set(sheet.col_values(4))
 
 print(f"Found {len(existing_ids)} existing reviews in sheet")
 
@@ -77,7 +73,7 @@ print(f"Found {len(existing_ids)} existing reviews in sheet")
 # FETCH REVIEWS
 # ==========================
 
-for package_name in PACKAGE_NAMES:
+for package_name, app_name in GAMES.items():
 
     print(f"\n{'=' * 50}")
     print(f"Fetching reviews for {package_name}")
@@ -155,10 +151,12 @@ for package_name in PACKAGE_NAMES:
             continue
 
         rows_to_add.append([
+            "Android",
+            app_name,
             package_name,
             review_id,
-            review.get("score", ""),
             review.get("userName", ""),
+            review.get("score", ""),
             review.get("content", ""),
             str(review.get("at", ""))
         ])
