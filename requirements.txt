@@ -1,3 +1,4 @@
 google-play-scraper
 gspread
 google-auth
+requests
