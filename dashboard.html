@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Reviews Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid #334155;
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #6366f1, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header .meta {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        /* ── Nav ── */
+        .nav {
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            gap: 4px;
+            padding: 0 32px;
+            overflow-x: auto;
+        }
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            padding: 16px 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .nav-btn:hover { color: #e2e8f0; }
+        .nav-btn.active {
+            color: #6366f1;
+            border-bottom-color: #6366f1;
+        }
+
+        /* ── Sections ── */
+        .section { display: none; padding: 32px; }
+        .section.active { display: block; }
+
+        /* ── Stat Cards ── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6366f1;
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ── Charts Grid ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+        .chart-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .chart-card h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+
+        /* ── Table ── */
+        .table-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+        .table-card h3 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 16px;
+        }
+        .table-wrapper { overflow-x: auto; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        th {
+            text-align: left;
+            padding: 10px 12px;
+            background: #0f172a;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        td {
+            padding: 10px 12px;
+            border-top: 1px solid #334155;
+            vertical-align: top;
+        }
+        tr:hover td { background: #0f172a; }
+        .review-text { max-width: 320px; color: #94a3b8; line-height: 1.4; }
+
+        /* ── Badges ── */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-positive { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .badge-neutral  { background: rgba(234,179,8,0.15);  color: #eab308; }
+        .badge-negative { background: rgba(239,68,68,0.15);  color: #ef4444; }
+        .badge-unknown  { background: rgba(148,163,184,0.15); color: #94a3b8; }
+        .badge-category { background: rgba(99,102,241,0.15); color: #a78bfa; }
+
+        /* ── Game Tabs ── */
+        .game-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .tab-btn {
+            background: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { border-color: #6366f1; color: #e2e8f0; }
+        .tab-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: #fff;
+        }
+        .game-panel { display: none; }
+        .game-panel.active { display: block; }
+        .game-header { margin-bottom: 20px; }
+        .game-header h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 16px; }
+        .game-stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+        }
+
+        /* ── Comparison Table ── */
+        .comparison-table td:first-child { font-weight: 600; color: #e2e8f0; }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .header { padding: 16px; }
+            .section { padding: 16px; }
+            .nav { padding: 0 16px; }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>🎮 Game Reviews Dashboard</h1>
+        <div class="meta">Last updated: June 19, 2026 at 12:38 PM</div>
+    </div>
+    <div class="meta">577 total reviews · 5 games</div>
+</div>
+
+<nav class="nav">
+    <button class="nav-btn active" onclick="switchSection('overview', this)">📊 Overview</button>
+    <button class="nav-btn" onclick="switchSection('games', this)">🎮 Per Game</button>
+    <button class="nav-btn" onclick="switchSection('comparison', this)">📈 Comparison</button>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     OVERVIEW SECTION
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="section active" id="section-overview">
+
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">577</div>
+            <div class="stat-label">Total Reviews</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">4.4</div>
+            <div class="stat-label">Avg Rating</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">5</div>
+            <div class="stat-label">Games Tracked</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">497</div>
+            <div class="stat-label">Android Reviews</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">80</div>
+            <div class="stat-label">iOS Reviews</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Positive</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Negative</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">0</div>
+            <div class="stat-label">Neutral</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>⭐ Overall Rating Distribution</h3>
+            <canvas id="overallRatingChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>💬 Overall Sentiment</h3>
+            <canvas id="overallSentimentChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>📱 Platform Split</h3>
+            <canvas id="overallPlatformChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>🏷️ Category Breakdown</h3>
+            <canvas id="overallCategoryChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:28px;">
+        <h3>📅 Reviews Over Time (All Games)</h3>
+        <canvas id="overallMonthlyChart"></canvas>
+    </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     PER GAME SECTION
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="section-games">
+    <div class="game-tabs">
+        <button class="tab-btn active" onclick="switchGame(0)">Dragon Rescue</button>
+<button class="tab-btn " onclick="switchGame(1)">Grill Master</button>
+<button class="tab-btn " onclick="switchGame(2)">Hidden Objects</button>
+<button class="tab-btn " onclick="switchGame(3)">Sticker</button>
+<button class="tab-btn " onclick="switchGame(4)">Zen Math Crossword</button>
+
+    </div>
+    
+    <div class="game-panel active" id="game_0">
+        <div class="game-header">
+            <h2>🎮 Dragon Rescue</h2>
+            <div class="game-stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">Total Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5.0</div>
+                    <div class="stat-label">Avg Rating</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Android</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">iOS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Positive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Negative</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>⭐ Rating Distribution</h3>
+                <canvas id="ratingChart_game_0"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💬 Sentiment Breakdown</h3>
+                <canvas id="sentimentChart_game_0"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏷️ Category Breakdown</h3>
+                <canvas id="categoryChart_game_0"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📅 Reviews Over Time</h3>
+                <canvas id="monthlyChart_game_0"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3>📝 Recent Reviews</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Rating</th>
+                            <th>Sentiment</th>
+                            <th>Category</th>
+                            <th>Review</th>
+                            <th>Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr>
+            <td>iOS</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Enjoying the game 🙂</td>
+            <td>2026-04</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">🔥</td>
+            <td>2026-02</td>
+        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var rd = [0, 0, 0, 0, 2];
+        var sd = [0, 0, 0, 2];
+        var cats = ["Unknown"];
+        var cd = [2];
+        var months = ["2026-02", "2026-04"];
+        var mv = [1, 1];
+
+        new Chart(document.getElementById('ratingChart_game_0'), {
+            type: 'bar',
+            data: {
+                labels: ['1★','2★','3★','4★','5★'],
+                datasets: [{
+                    label: 'Reviews',
+                    data: rd,
+                    backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('sentimentChart_game_0'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive','Neutral','Negative','Unknown'],
+                datasets: [{
+                    data: sd,
+                    backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
+                    borderWidth: 2,
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('categoryChart_game_0'), {
+            type: 'bar',
+            data: {
+                labels: cats,
+                datasets: [{
+                    label: 'Reviews',
+                    data: cd,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('monthlyChart_game_0'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Reviews',
+                    data: mv,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    })();
+    </script>
+
+    <div class="game-panel " id="game_1">
+        <div class="game-header">
+            <h2>🎮 Grill Master</h2>
+            <div class="game-stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">9</div>
+                    <div class="stat-label">Total Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">5.0</div>
+                    <div class="stat-label">Avg Rating</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">8</div>
+                    <div class="stat-label">Android</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">iOS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Positive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Negative</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>⭐ Rating Distribution</h3>
+                <canvas id="ratingChart_game_1"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💬 Sentiment Breakdown</h3>
+                <canvas id="sentimentChart_game_1"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏷️ Category Breakdown</h3>
+                <canvas id="categoryChart_game_1"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📅 Reviews Over Time</h3>
+                <canvas id="monthlyChart_game_1"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3>📝 Recent Reviews</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Rating</th>
+                            <th>Sentiment</th>
+                            <th>Category</th>
+                            <th>Review</th>
+                            <th>Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">it is good game</td>
+            <td>2026-04</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">ads are minimal which is the reason I will stay but, I have only played 3 games.</td>
+            <td>2026-04</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">good grafting to the picture</td>
+            <td>2026-04</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">I just started playing great so far</td>
+            <td>2026-03</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">It's a cut above. The vast majority of these food sort puzzles, but I really like these games, I do this was kind of dif...</td>
+            <td>2026-03</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">this is great fun . How could you get any Better! # 1 Game.</td>
+            <td>2026-03</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Just amazing</td>
+            <td>2026-01</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">this is a fun little game that will help kids with shape matching recognition, skills and things like that. I did find t...</td>
+            <td>2026-01</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">🌽🔥🍗</td>
+            <td>2026-01</td>
+        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var rd = [0, 0, 0, 0, 9];
+        var sd = [0, 0, 0, 9];
+        var cats = ["Unknown"];
+        var cd = [9];
+        var months = ["2026-01", "2026-03", "2026-04"];
+        var mv = [3, 3, 3];
+
+        new Chart(document.getElementById('ratingChart_game_1'), {
+            type: 'bar',
+            data: {
+                labels: ['1★','2★','3★','4★','5★'],
+                datasets: [{
+                    label: 'Reviews',
+                    data: rd,
+                    backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('sentimentChart_game_1'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive','Neutral','Negative','Unknown'],
+                datasets: [{
+                    data: sd,
+                    backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
+                    borderWidth: 2,
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('categoryChart_game_1'), {
+            type: 'bar',
+            data: {
+                labels: cats,
+                datasets: [{
+                    label: 'Reviews',
+                    data: cd,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('monthlyChart_game_1'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Reviews',
+                    data: mv,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    })();
+    </script>
+
+    <div class="game-panel " id="game_2">
+        <div class="game-header">
+            <h2>🎮 Hidden Objects</h2>
+            <div class="game-stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">66</div>
+                    <div class="stat-label">Total Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4.7</div>
+                    <div class="stat-label">Avg Rating</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">65</div>
+                    <div class="stat-label">Android</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">1</div>
+                    <div class="stat-label">iOS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Positive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Negative</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>⭐ Rating Distribution</h3>
+                <canvas id="ratingChart_game_2"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💬 Sentiment Breakdown</h3>
+                <canvas id="sentimentChart_game_2"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏷️ Category Breakdown</h3>
+                <canvas id="categoryChart_game_2"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📅 Reviews Over Time</h3>
+                <canvas id="monthlyChart_game_2"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3>📝 Recent Reviews</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Rating</th>
+                            <th>Sentiment</th>
+                            <th>Category</th>
+                            <th>Review</th>
+                            <th>Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">like the game</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">this one is super!</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">One was VERY hard for me to find!</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Relaxing Game Thank you and God Bless you all</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">wow 👌 👏</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">adorable puzzles. very relaxing</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Some shades of color can look the same. And can make it a guessing game on trying to match the colors for someone with c...</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">👍</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">loading takes long time</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">like</td>
+            <td>2026-06</td>
+        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var rd = [3, 0, 2, 4, 57];
+        var sd = [0, 0, 0, 66];
+        var cats = ["Unknown"];
+        var cd = [66];
+        var months = ["2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+        var mv = [1, 19, 14, 18, 14];
+
+        new Chart(document.getElementById('ratingChart_game_2'), {
+            type: 'bar',
+            data: {
+                labels: ['1★','2★','3★','4★','5★'],
+                datasets: [{
+                    label: 'Reviews',
+                    data: rd,
+                    backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('sentimentChart_game_2'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive','Neutral','Negative','Unknown'],
+                datasets: [{
+                    data: sd,
+                    backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
+                    borderWidth: 2,
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('categoryChart_game_2'), {
+            type: 'bar',
+            data: {
+                labels: cats,
+                datasets: [{
+                    label: 'Reviews',
+                    data: cd,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('monthlyChart_game_2'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Reviews',
+                    data: mv,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    })();
+    </script>
+
+    <div class="game-panel " id="game_3">
+        <div class="game-header">
+            <h2>🎮 Sticker</h2>
+            <div class="game-stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">87</div>
+                    <div class="stat-label">Total Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">3.83</div>
+                    <div class="stat-label">Avg Rating</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">70</div>
+                    <div class="stat-label">Android</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">17</div>
+                    <div class="stat-label">iOS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Positive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Negative</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>⭐ Rating Distribution</h3>
+                <canvas id="ratingChart_game_3"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💬 Sentiment Breakdown</h3>
+                <canvas id="sentimentChart_game_3"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏷️ Category Breakdown</h3>
+                <canvas id="categoryChart_game_3"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📅 Reviews Over Time</h3>
+                <canvas id="monthlyChart_game_3"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3>📝 Recent Reviews</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Rating</th>
+                            <th>Sentiment</th>
+                            <th>Category</th>
+                            <th>Review</th>
+                            <th>Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr>
+            <td>Android</td>
+            <td>★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Too many ads in the middle of gameplay. Not worth it</td>
+            <td>2026-05</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Fun</td>
+            <td>2026-05</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Une publicité en plein milieu d’un niveau… Delete….</td>
+            <td>2026-05</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Too many ads</td>
+            <td>2026-05</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">very relaxing graphics are cool 😎</td>
+            <td>2026-05</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">I installed this game thinking i could play it offline while waiting when i'm out of the house. Needs internet to work. ...</td>
+            <td>2026-05</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">I have finished all 200 normal levels…. Please update</td>
+            <td>2026-04</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">I really wanted this to be my new go to game but there are waaaaayyy too many ads in a single game level. I just can’t g...</td>
+            <td>2026-03</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Je me désabonne dans une seul parti il ya trop de pub c’est abusé vous avez gagner mon désabonnement</td>
+            <td>2026-03</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">relaxing game</td>
+            <td>2026-02</td>
+        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var rd = [18, 5, 6, 3, 55];
+        var sd = [0, 0, 0, 87];
+        var cats = ["Unknown"];
+        var cd = [87];
+        var months = ["2025-02", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05"];
+        var mv = [2, 7, 7, 7, 12, 13, 4, 12, 8, 6, 2, 1, 6];
+
+        new Chart(document.getElementById('ratingChart_game_3'), {
+            type: 'bar',
+            data: {
+                labels: ['1★','2★','3★','4★','5★'],
+                datasets: [{
+                    label: 'Reviews',
+                    data: rd,
+                    backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('sentimentChart_game_3'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive','Neutral','Negative','Unknown'],
+                datasets: [{
+                    data: sd,
+                    backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
+                    borderWidth: 2,
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('categoryChart_game_3'), {
+            type: 'bar',
+            data: {
+                labels: cats,
+                datasets: [{
+                    label: 'Reviews',
+                    data: cd,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('monthlyChart_game_3'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Reviews',
+                    data: mv,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    })();
+    </script>
+
+    <div class="game-panel " id="game_4">
+        <div class="game-header">
+            <h2>🎮 Zen Math Crossword</h2>
+            <div class="game-stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">413</div>
+                    <div class="stat-label">Total Reviews</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">4.46</div>
+                    <div class="stat-label">Avg Rating</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">354</div>
+                    <div class="stat-label">Android</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">59</div>
+                    <div class="stat-label">iOS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Positive</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">0</div>
+                    <div class="stat-label">Negative</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>⭐ Rating Distribution</h3>
+                <canvas id="ratingChart_game_4"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💬 Sentiment Breakdown</h3>
+                <canvas id="sentimentChart_game_4"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🏷️ Category Breakdown</h3>
+                <canvas id="categoryChart_game_4"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📅 Reviews Over Time</h3>
+                <canvas id="monthlyChart_game_4"></canvas>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <h3>📝 Recent Reviews</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Platform</th>
+                            <th>Rating</th>
+                            <th>Sentiment</th>
+                            <th>Category</th>
+                            <th>Review</th>
+                            <th>Month</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+        <tr>
+            <td>iOS</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Aiuta a fortificare la propria logica!!!</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Good game, keep one's mind sharp and alert.</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">super 👌 I❤️ 😍</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">mind opening game</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">There are adds more then content in the game</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Nice</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Great</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">it's a good game</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>iOS</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">Love this game ♥️</td>
+            <td>2026-06</td>
+        </tr>
+        <tr>
+            <td>Android</td>
+            <td>★★★★★</td>
+            <td><span class="badge badge-unknown">Unknown</span></td>
+            <td><span class="badge badge-category">Unknown</span></td>
+            <td class="review-text">challenging</td>
+            <td>2026-06</td>
+        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var rd = [39, 5, 18, 15, 336];
+        var sd = [0, 0, 0, 413];
+        var cats = ["Unknown"];
+        var cd = [413];
+        var months = ["2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"];
+        var mv = [11, 2, 11, 19, 18, 26, 26, 37, 46, 62, 55, 29, 36, 35];
+
+        new Chart(document.getElementById('ratingChart_game_4'), {
+            type: 'bar',
+            data: {
+                labels: ['1★','2★','3★','4★','5★'],
+                datasets: [{
+                    label: 'Reviews',
+                    data: rd,
+                    backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('sentimentChart_game_4'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Positive','Neutral','Negative','Unknown'],
+                datasets: [{
+                    data: sd,
+                    backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
+                    borderWidth: 2,
+                    borderColor: '#1e293b'
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('categoryChart_game_4'), {
+            type: 'bar',
+            data: {
+                labels: cats,
+                datasets: [{
+                    label: 'Reviews',
+                    data: cd,
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+
+        new Chart(document.getElementById('monthlyChart_game_4'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Reviews',
+                    data: mv,
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99,102,241,0.15)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    })();
+    </script>
+
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     COMPARISON SECTION
+════════════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="section-comparison">
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>📊 Total Reviews by Game</h3>
+            <canvas id="compTotalChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>⭐ Average Rating by Game</h3>
+            <canvas id="compAvgChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>😊 Positive Reviews by Game</h3>
+            <canvas id="compPositiveChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>😠 Negative Reviews by Game</h3>
+            <canvas id="compNegativeChart"></canvas>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <h3>📋 Game Comparison Table</h3>
+        <div class="table-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Game</th>
+                        <th>Total</th>
+                        <th>Avg Rating</th>
+                        <th>Android</th>
+                        <th>iOS</th>
+                        <th>Positive</th>
+                        <th>Neutral</th>
+                        <th>Negative</th>
+                        <th>Top Category</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Dragon Rescue</td><td>2</td><td>★★★★★ 5.0</td><td>0</td><td>2</td><td><span class='badge badge-positive'>0</span></td><td><span class='badge badge-neutral'>0</span></td><td><span class='badge badge-negative'>0</span></td><td><span class='badge badge-category'>Unknown</span></td></tr><tr><td>Grill Master</td><td>9</td><td>★★★★★ 5.0</td><td>8</td><td>1</td><td><span class='badge badge-positive'>0</span></td><td><span class='badge badge-neutral'>0</span></td><td><span class='badge badge-negative'>0</span></td><td><span class='badge badge-category'>Unknown</span></td></tr><tr><td>Hidden Objects</td><td>66</td><td>★★★★ 4.7</td><td>65</td><td>1</td><td><span class='badge badge-positive'>0</span></td><td><span class='badge badge-neutral'>0</span></td><td><span class='badge badge-negative'>0</span></td><td><span class='badge badge-category'>Unknown</span></td></tr><tr><td>Sticker</td><td>87</td><td>★★★ 3.83</td><td>70</td><td>17</td><td><span class='badge badge-positive'>0</span></td><td><span class='badge badge-neutral'>0</span></td><td><span class='badge badge-negative'>0</span></td><td><span class='badge badge-category'>Unknown</span></td></tr><tr><td>Zen Math Crossword</td><td>413</td><td>★★★★ 4.46</td><td>354</td><td>59</td><td><span class='badge badge-positive'>0</span></td><td><span class='badge badge-neutral'>0</span></td><td><span class='badge badge-negative'>0</span></td><td><span class='badge badge-category'>Unknown</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ── Section navigation ──────────────────────────────────────────────────────
+function switchSection(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('section-' + id).classList.add('active');
+    btn.classList.add('active');
+}
+
+// ── Game tab navigation ──────────────────────────────────────────────────────
+function switchGame(idx) {
+    document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('game_' + idx).classList.add('active');
+    document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+}
+
+// ── Overall Charts ───────────────────────────────────────────────────────────
+new Chart(document.getElementById('overallRatingChart'), {
+    type: 'bar',
+    data: {
+        labels: ['1★','2★','3★','4★','5★'],
+        datasets: [{
+            label: 'Reviews',
+            data: [60, 10, 26, 22, 459],
+            backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+new Chart(document.getElementById('overallSentimentChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Positive','Neutral','Negative','Unknown'],
+        datasets: [{
+            data: [0, 0, 0, 577],
+            backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
+            borderWidth: 2,
+            borderColor: '#1e293b'
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+new Chart(document.getElementById('overallPlatformChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ["Android", "iOS"],
+        datasets: [{
+            data: [497, 80],
+            backgroundColor: ['#6366f1','#06b6d4','#f97316','#22c55e'],
+            borderWidth: 2,
+            borderColor: '#1e293b'
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+new Chart(document.getElementById('overallCategoryChart'), {
+    type: 'bar',
+    data: {
+        labels: ["Unknown"],
+        datasets: [{
+            label: 'Reviews',
+            data: [577],
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+new Chart(document.getElementById('overallMonthlyChart'), {
+    type: 'line',
+    data: {
+        labels: ["2025-02", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06"],
+        datasets: [{
+            label: 'Reviews',
+            data: [2, 11, 9, 18, 26, 30, 39, 30, 49, 57, 70, 79, 48, 60, 49],
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.15)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 4
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+// ── Comparison Charts ────────────────────────────────────────────────────────
+new Chart(document.getElementById('compTotalChart'), {
+    type: 'bar',
+    data: {
+        labels: ["Dragon Rescue", "Grill Master", "Hidden Objects", "Sticker", "Zen Math Crossword"],
+        datasets: [{
+            label: 'Total Reviews',
+            data: [2, 9, 66, 87, 413],
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+new Chart(document.getElementById('compAvgChart'), {
+    type: 'bar',
+    data: {
+        labels: ["Dragon Rescue", "Grill Master", "Hidden Objects", "Sticker", "Zen Math Crossword"],
+        datasets: [{
+            label: 'Avg Rating',
+            data: [5.0, 5.0, 4.7, 3.83, 4.46],
+            backgroundColor: '#22c55e',
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false, min: 0, max: 5 } } }
+});
+
+new Chart(document.getElementById('compPositiveChart'), {
+    type: 'bar',
+    data: {
+        labels: ["Dragon Rescue", "Grill Master", "Hidden Objects", "Sticker", "Zen Math Crossword"],
+        datasets: [{
+            label: 'Positive',
+            data: [0, 0, 0, 0, 0],
+            backgroundColor: '#22c55e',
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+new Chart(document.getElementById('compNegativeChart'), {
+    type: 'bar',
+    data: {
+        labels: ["Dragon Rescue", "Grill Master", "Hidden Objects", "Sticker", "Zen Math Crossword"],
+        datasets: [{
+            label: 'Negative',
+            data: [0, 0, 0, 0, 0],
+            backgroundColor: '#ef4444',
+            borderRadius: 6
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+</script>
+
+</body>
+</html>
