@@ -1,5 +1,6 @@
 import os
 import json
+import re
 import tempfile
 import gspread
 from collections import defaultdict
@@ -7,6 +8,7 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify, redirect, url_for, Response
 
 from google.oauth2.service_account import Credentials
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 app = Flask(__name__)
 
@@ -280,6 +282,104 @@ def api_data():
 def api_refresh():
     data = get_cached_data(force_refresh=True)
     return jsonify({"status": "ok", "last_updated": data.get("last_updated")})
+
+
+def classify_category(text: str) -> str:
+    """Classify review into a category using word-boundary-aware matching."""
+    t = text.lower()
+
+    def has_word(words):
+        return any(re.search(r'\b' + re.escape(w) + r'\b', t) for w in words)
+
+    if has_word(["crash", "crashes", "crashed", "bug", "bugs", "freeze", "freezes",
+                 "frozen", "stuck", "glitch", "glitches", "error", "broken"]):
+        return "Bug"
+    if has_word(["ad", "ads", "advertisement", "advertisements", "popup", "pop-up",
+                 "pop up", "banner"]):
+        return "Ads"
+    if has_word(["pay", "paid", "payment", "purchase", "subscription", "money",
+                 "expensive", "price", "cost", "refund", "charge", "charged"]):
+        return "Payment"
+    if has_word(["hard", "difficult", "difficulty", "impossible", "too hard",
+                 "unfair", "unbalanced", "overpowered"]):
+        return "Difficulty"
+    if has_word(["level", "levels", "stage", "stages", "map", "maps", "world"]):
+        return "Levels"
+    if has_word(["slow", "lag", "lagging", "laggy", "loading", "load", "performance",
+                 "fps", "frame", "stutter", "battery", "heat", "hot"]):
+        return "Performance"
+    if has_word(["ui", "ux", "interface", "design", "layout", "confusing", "menu",
+                 "button", "buttons", "navigation", "ugly", "look", "looks"]):
+        return "UI/UX"
+    if has_word(["feature", "add", "wish", "want", "would be nice", "suggestion",
+                 "request", "please add", "hope", "update"]):
+        return "Feature Request"
+    return "General"
+
+
+@app.route("/reanalyze")
+def reanalyze():
+    """Clear the Analysis sheet and re-run VADER analysis on all reviews."""
+    try:
+        credentials = get_credentials()
+        gc = gspread.authorize(credentials)
+        spreadsheet = gc.open(SHEET_NAME)
+
+        reviews_sheet  = spreadsheet.worksheet("Reviews")
+        analysis_sheet = spreadsheet.worksheet("Review Analysis")
+
+        reviews_data = reviews_sheet.get_all_values()
+    except Exception as e:
+        return render_template("error.html", error=f"Could not connect to Google Sheets: {e}"), 500
+
+    analyzer = SentimentIntensityAnalyzer()
+
+    ANALYSIS_HEADERS = ["Platform", "App Name", "Review ID", "Rating",
+                        "Sentiment", "Category", "Sentiment Score"]
+
+    # Clear and re-write headers
+    analysis_sheet.clear()
+    analysis_sheet.append_row(ANALYSIS_HEADERS)
+
+    rows_to_add = []
+    # Reviews sheet: Platform(0) | App Name(1) | Identifier(2) | User Name(3) | Review ID(4) | Rating(5) | Review(6) | Date(7)
+    for row in reviews_data[1:]:
+        if len(row) < 7:
+            continue
+        platform    = row[0].strip()
+        app_name    = row[1].strip()
+        review_id   = row[4].strip()
+        rating      = row[5].strip()
+        review_text = row[6].strip()
+
+        if not review_id or not review_text:
+            continue
+
+        score = analyzer.polarity_scores(review_text)["compound"]
+        if score > 0.2:
+            sentiment = "Positive"
+        elif score < -0.2:
+            sentiment = "Negative"
+        else:
+            sentiment = "Neutral"
+
+        category = classify_category(review_text)
+
+        rows_to_add.append([
+            platform, app_name, review_id, rating,
+            sentiment, category, round(score, 4)
+        ])
+
+    if rows_to_add:
+        # Write in batches of 500 to avoid API limits
+        batch_size = 500
+        for i in range(0, len(rows_to_add), batch_size):
+            analysis_sheet.append_rows(rows_to_add[i:i+batch_size], value_input_option="RAW")
+
+    # Force refresh the dashboard cache
+    get_cached_data(force_refresh=True)
+
+    return redirect(url_for("index") + "?reanalyzed=" + str(len(rows_to_add)))
 
 
 @app.route("/export/csv")

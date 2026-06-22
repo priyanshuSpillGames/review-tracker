@@ -19,6 +19,8 @@
         .btn-refresh:hover { background: #4f46e5; }
         .btn-export { background: #0f766e; }
         .btn-export:hover { background: #0d9488; }
+        .btn-reanalyze { background: #7c3aed; }
+        .btn-reanalyze:hover { background: #6d28d9; }
 
         /* ── Nav ── */
         .nav { background: #1e293b; border-bottom: 1px solid #334155; display: flex; gap: 4px; padding: 0 32px; overflow-x: auto; }
@@ -142,6 +144,7 @@
     <div class="header-right">
         <div class="meta">{{ overall.total }} reviews · {{ games|length }} games</div>
         <a href="/export/csv" class="header-btn btn-export">⬇️ Export CSV</a>
+        <a href="/reanalyze" class="header-btn btn-reanalyze" onclick="return confirmReanalyze()">🔬 Re-analyze</a>
         <a href="/refresh" class="header-btn btn-refresh">🔄 Refresh</a>
     </div>
 </div>
@@ -693,6 +696,11 @@ function clearGameFilters(idx) {
     container.querySelectorAll('select').forEach(function(s){ s.value=s.options[0].value; });
     container.querySelector('input[type="text"]').value='';
     filterGameReviews(idx);
+}
+
+// ── Re-analyze confirm ───────────────────────────────────────────────────────
+function confirmReanalyze() {
+    return confirm('This will clear and rebuild all sentiment/category analysis from scratch. This may take a minute. Continue?');
 }
 
 // ── Overview Charts ───────────────────────────────────────────────────────────
