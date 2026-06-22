@@ -11,9 +11,6 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     steps:
 
       - name: Checkout
@@ -39,17 +36,3 @@ jobs:
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
         run: |
           python review_analysis.py
-
-      - name: Generate Dashboard
-        env:
-          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
-        run: |
-          python dashboard_generator.py
-
-      - name: Commit and Push Dashboard
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dashboard.html
-          git diff --cached --quiet || git commit -m "chore: update dashboard [skip ci]"
-          git push
