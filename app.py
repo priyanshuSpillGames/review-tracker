@@ -4,7 +4,7 @@ import tempfile
 import gspread
 from collections import defaultdict
 from datetime import datetime
-from flask import Flask, render_template, jsonify, redirect, url_for
+from flask import Flask, render_template, jsonify, redirect, url_for, Response
 
 from google.oauth2.service_account import Credentials
 
@@ -29,35 +29,44 @@ def get_credentials():
         return Credentials.from_service_account_file("service_account.json", scopes=SCOPES)
     else:
         service_account_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT"])
-        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(service_account_info, f)
             temp_json = f.name
-        return Credentials.from_service_account_file(temp_json, scopes=SCOPES)
+        creds = Credentials.from_service_account_file(temp_json, scopes=SCOPES)
+        try:
+            os.unlink(temp_json)
+        except Exception:
+            pass
+        return creds
 
 
 def fetch_data():
     """Fetch and aggregate all data from Google Sheets."""
-    credentials = get_credentials()
-    gc = gspread.authorize(credentials)
-    spreadsheet = gc.open(SHEET_NAME)
+    try:
+        credentials = get_credentials()
+        gc = gspread.authorize(credentials)
+        spreadsheet = gc.open(SHEET_NAME)
 
-    reviews_sheet = spreadsheet.worksheet("Reviews")
-    analysis_sheet = spreadsheet.worksheet("Review Analysis")
+        reviews_sheet  = spreadsheet.worksheet("Reviews")
+        analysis_sheet = spreadsheet.worksheet("Review Analysis")
 
-    reviews_data = reviews_sheet.get_all_values()
-    analysis_data = analysis_sheet.get_all_values()
+        reviews_data  = reviews_sheet.get_all_values()
+        analysis_data = analysis_sheet.get_all_values()
+    except Exception as e:
+        return {"error": str(e)}
 
     # ── Parse Reviews ──────────────────────────────────────────────────────────
+    # Columns: Platform | App Name | Identifier | User Name | Review ID | Rating | Review | Date
     reviews_rows = []
     for row in reviews_data[1:]:
-        if len(row) < 8:
+        if len(row) < 7:
             continue
         platform    = row[0].strip()
         app_name    = row[1].strip()
         review_id   = row[4].strip()
         rating_raw  = row[5].strip()
         review_text = row[6].strip()
-        date_raw    = row[7].strip()
+        date_raw    = row[7].strip() if len(row) > 7 else ""
 
         try:
             rating = float(rating_raw)
@@ -82,31 +91,39 @@ def fetch_data():
             "rating":      rating,
             "review_text": review_text,
             "month":       month_key,
+            "date_raw":    date_raw,
         })
 
     # ── Parse Analysis ─────────────────────────────────────────────────────────
+    # Columns: Platform | App Name | Review ID | Rating | Sentiment | Category | Sentiment Score
     analysis_map = {}
     for row in analysis_data[1:]:
         if len(row) < 6:
             continue
-        review_id = row[2].strip()
-        sentiment = row[4].strip()
-        category  = row[5].strip()
-        analysis_map[review_id] = {"sentiment": sentiment, "category": category}
+        review_id       = row[2].strip()
+        sentiment       = row[4].strip()
+        category        = row[5].strip()
+        sentiment_score = float(row[6]) if len(row) > 6 and row[6].strip() else None
+        analysis_map[review_id] = {
+            "sentiment":       sentiment,
+            "category":        category,
+            "sentiment_score": sentiment_score,
+        }
 
     # ── Merge ──────────────────────────────────────────────────────────────────
     for r in reviews_rows:
         info = analysis_map.get(r["review_id"], {})
-        r["sentiment"] = info.get("sentiment", "Unknown")
-        r["category"]  = info.get("category", "Unknown")
+        r["sentiment"]       = info.get("sentiment", "Unknown")
+        r["category"]        = info.get("category", "Unknown")
+        r["sentiment_score"] = info.get("sentiment_score")
 
     # ── Aggregate ──────────────────────────────────────────────────────────────
     def aggregate(rows):
-        total  = len(rows)
+        total   = len(rows)
         ratings = [r["rating"] for r in rows if r["rating"] > 0]
         avg_rating = round(sum(ratings) / len(ratings), 2) if ratings else 0
 
-        rating_dist   = defaultdict(int)
+        rating_dist    = defaultdict(int)
         sentiment_dist = defaultdict(int)
         category_dist  = defaultdict(int)
         platform_dist  = defaultdict(int)
@@ -122,14 +139,38 @@ def fetch_data():
             if r["month"]:
                 monthly[r["month"]] += 1
 
+        pos   = sentiment_dist.get("Positive", 0)
+        neg   = sentiment_dist.get("Negative", 0)
+        neu   = sentiment_dist.get("Neutral", 0)
+        total_analysed = pos + neg + neu
+        pos_pct = round(pos / total_analysed * 100, 1) if total_analysed else 0
+        neg_pct = round(neg / total_analysed * 100, 1) if total_analysed else 0
+        neu_pct = round(neu / total_analysed * 100, 1) if total_analysed else 0
+
+        # Trend: compare last full month vs previous month
+        sorted_months = sorted(monthly.keys())
+        trend_reviews = 0
+        trend_direction = "—"
+        if len(sorted_months) >= 2:
+            last_m  = monthly[sorted_months[-1]]
+            prev_m  = monthly[sorted_months[-2]]
+            diff    = last_m - prev_m
+            trend_reviews = diff
+            trend_direction = f"+{diff}" if diff > 0 else str(diff)
+
         return {
-            "total":          total,
-            "avg_rating":     avg_rating,
-            "rating_dist":    dict(rating_dist),
-            "sentiment_dist": dict(sentiment_dist),
-            "category_dist":  dict(category_dist),
-            "platform_dist":  dict(platform_dist),
-            "monthly":        dict(sorted(monthly.items())),
+            "total":            total,
+            "avg_rating":       avg_rating,
+            "rating_dist":      dict(rating_dist),
+            "sentiment_dist":   dict(sentiment_dist),
+            "category_dist":    dict(category_dist),
+            "platform_dist":    dict(platform_dist),
+            "monthly":          dict(sorted(monthly.items())),
+            "pos_pct":          pos_pct,
+            "neg_pct":          neg_pct,
+            "neu_pct":          neu_pct,
+            "trend_direction":  trend_direction,
+            "trend_reviews":    trend_reviews,
         }
 
     overall = aggregate(reviews_rows)
@@ -142,16 +183,19 @@ def fetch_data():
         per_game[game] = aggregate(game_rows)
         per_game_reviews[game] = sorted(game_rows, key=lambda x: x["month"], reverse=True)
 
-    # All reviews sorted newest first (for the All Reviews tab)
+    # All reviews sorted newest first
     all_reviews_sorted = sorted(reviews_rows, key=lambda x: x["month"], reverse=True)
+
+    # All unique months for date range filter
+    all_months = sorted(set(r["month"] for r in reviews_rows if r["month"]))
 
     # ── Pre-compute chart data for Jinja2 ─────────────────────────────────────
     def chart_data(agg):
-        cats_sorted = sorted(agg["category_dist"].keys())
+        cats_sorted      = sorted(agg["category_dist"].keys())
         platforms_sorted = sorted(agg["platform_dist"].keys())
         return {
-            "rating_dist":    [agg["rating_dist"].get(s, 0) for s in range(1, 6)],
-            "sentiment_dist": [agg["sentiment_dist"].get(s, 0) for s in ["Positive", "Neutral", "Negative", "Unknown"]],
+            "rating_dist":     [agg["rating_dist"].get(s, 0) for s in range(1, 6)],
+            "sentiment_dist":  [agg["sentiment_dist"].get(s, 0) for s in ["Positive", "Neutral", "Negative", "Unknown"]],
             "category_labels": cats_sorted,
             "category_values": [agg["category_dist"][c] for c in cats_sorted],
             "platform_labels": platforms_sorted,
@@ -160,12 +204,12 @@ def fetch_data():
             "monthly_values":  list(agg["monthly"].values()),
         }
 
-    overall_chart = chart_data(overall)
+    overall_chart  = chart_data(overall)
     per_game_chart = {game: chart_data(per_game[game]) for game in games}
 
-    # Game comparison arrays
-    game_totals   = [per_game[g]["total"] for g in games]
-    game_avgs     = [per_game[g]["avg_rating"] for g in games]
+    # Comparison arrays
+    game_totals   = [per_game[g]["total"]                          for g in games]
+    game_avgs     = [per_game[g]["avg_rating"]                     for g in games]
     game_positive = [per_game[g]["sentiment_dist"].get("Positive", 0) for g in games]
     game_negative = [per_game[g]["sentiment_dist"].get("Negative", 0) for g in games]
 
@@ -175,6 +219,7 @@ def fetch_data():
         "per_game":         per_game,
         "per_game_reviews": per_game_reviews,
         "all_reviews":      all_reviews_sorted,
+        "all_months":       all_months,
         "overall_chart":    overall_chart,
         "per_game_chart":   per_game_chart,
         "game_totals":      game_totals,
@@ -182,6 +227,7 @@ def fetch_data():
         "game_positive":    game_positive,
         "game_negative":    game_negative,
         "last_updated":     datetime.now().strftime("%B %d, %Y at %I:%M %p"),
+        "error":            None,
     }
 
 
@@ -197,6 +243,8 @@ def get_cached_data(force_refresh=False):
 @app.route("/")
 def index():
     data = get_cached_data()
+    if data.get("error"):
+        return render_template("error.html", error=data["error"]), 500
     return render_template("dashboard.html", **data, active_game=None)
 
 
@@ -209,6 +257,8 @@ def refresh():
 @app.route("/game/<game_name>")
 def game_detail(game_name):
     data = get_cached_data()
+    if data.get("error"):
+        return redirect(url_for("index"))
     if game_name not in data["per_game"]:
         return redirect(url_for("index"))
     return render_template("dashboard.html", **data, active_game=game_name)
@@ -218,22 +268,55 @@ def game_detail(game_name):
 def api_data():
     data = get_cached_data()
     return jsonify({
-        "overall":    data["overall"],
-        "games":      data["games"],
-        "per_game":   data["per_game"],
-        "last_updated": data["last_updated"],
+        "overall":      data.get("overall"),
+        "games":        data.get("games"),
+        "per_game":     data.get("per_game"),
+        "last_updated": data.get("last_updated"),
+        "error":        data.get("error"),
     })
 
 
 @app.route("/api/refresh")
 def api_refresh():
     data = get_cached_data(force_refresh=True)
-    return jsonify({"status": "ok", "last_updated": data["last_updated"]})
+    return jsonify({"status": "ok", "last_updated": data.get("last_updated")})
+
+
+@app.route("/export/csv")
+def export_csv():
+    """Export all reviews as CSV."""
+    data = get_cached_data()
+    if data.get("error"):
+        return "Error loading data", 500
+
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Game", "Platform", "Rating", "Sentiment", "Sentiment Score", "Category", "Review", "Month"])
+    for rev in data["all_reviews"]:
+        writer.writerow([
+            rev["app_name"],
+            rev["platform"],
+            rev["rating"],
+            rev["sentiment"],
+            rev.get("sentiment_score", ""),
+            rev["category"],
+            rev["review_text"],
+            rev["month"],
+        ])
+
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=game_reviews.csv"}
+    )
 
 
 if __name__ == "__main__":
     print("Starting Game Reviews Dashboard...")
     print("Loading data from Google Sheets...")
     get_cached_data()
-    print(f"Dashboard ready at http://localhost:5001")
+    print("Dashboard ready at http://localhost:5001")
     app.run(debug=True, host="0.0.0.0", port=5001)
