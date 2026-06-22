@@ -7,124 +7,84 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
-            min-height: 100vh;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
 
         /* ── Header ── */
-        .header {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border-bottom: 1px solid #334155;
-            padding: 20px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        .header h1 {
-            font-size: 1.7rem;
-            font-weight: 700;
-            background: linear-gradient(90deg, #6366f1, #a78bfa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .header-right { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .header .meta { font-size: 0.8rem; color: #64748b; }
-        .refresh-btn {
-            background: #6366f1;
-            color: #fff;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
+        .header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid #334155; padding: 18px 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+        .header h1 { font-size: 1.6rem; font-weight: 700; background: linear-gradient(90deg, #6366f1, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .meta { font-size: 0.8rem; color: #64748b; }
+        .refresh-btn { background: #6366f1; color: #fff; border: none; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; }
         .refresh-btn:hover { background: #4f46e5; }
 
         /* ── Nav ── */
-        .nav {
-            background: #1e293b;
-            border-bottom: 1px solid #334155;
-            display: flex;
-            gap: 4px;
-            padding: 0 32px;
-            overflow-x: auto;
-        }
-        .nav-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            padding: 14px 20px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 500;
-            border-bottom: 3px solid transparent;
-            white-space: nowrap;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-block;
-        }
+        .nav { background: #1e293b; border-bottom: 1px solid #334155; display: flex; gap: 4px; padding: 0 32px; overflow-x: auto; }
+        .nav-btn { background: none; border: none; color: #94a3b8; padding: 13px 18px; cursor: pointer; font-size: 0.88rem; font-weight: 500; border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.2s; }
         .nav-btn:hover { color: #e2e8f0; }
         .nav-btn.active { color: #6366f1; border-bottom-color: #6366f1; }
 
         /* ── Sections ── */
-        .section { display: none; padding: 28px 32px; }
+        .section { display: none; padding: 24px 32px; }
         .section.active { display: block; }
 
         /* ── Stat Cards ── */
-        .stats-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 14px;
-            margin-bottom: 24px;
-        }
-        .stat-card {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 12px;
-            padding: 18px;
-            text-align: center;
-            transition: transform 0.2s, border-color 0.2s;
-        }
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 22px; }
+        .stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; text-align: center; transition: transform 0.2s, border-color 0.2s; }
         .stat-card:hover { transform: translateY(-2px); border-color: #6366f1; }
-        .stat-number { font-size: 1.9rem; font-weight: 700; color: #6366f1; line-height: 1; }
-        .stat-label { font-size: 0.75rem; color: #64748b; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-number { font-size: 1.8rem; font-weight: 700; color: #6366f1; line-height: 1; }
+        .stat-label { font-size: 0.72rem; color: #64748b; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 
-        /* ── Charts Grid ── */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 18px;
-            margin-bottom: 24px;
-        }
-        .chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
-        .chart-card h3 { font-size: 0.9rem; font-weight: 600; color: #94a3b8; margin-bottom: 14px; }
-        .chart-card-wide { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-        .chart-card-wide h3 { font-size: 0.9rem; font-weight: 600; color: #94a3b8; margin-bottom: 14px; }
+        /* ── Charts ── */
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 22px; }
+        .chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 18px; }
+        .chart-card h3 { font-size: 0.88rem; font-weight: 600; color: #94a3b8; margin-bottom: 12px; }
+        .chart-card-wide { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 18px; margin-bottom: 22px; }
+        .chart-card-wide h3 { font-size: 0.88rem; font-weight: 600; color: #94a3b8; margin-bottom: 12px; }
+
+        /* ── Filter Bar ── */
+        .filter-bar { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+        .filter-group select, .filter-group input { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 7px 10px; border-radius: 7px; font-size: 0.85rem; outline: none; min-width: 130px; }
+        .filter-group select:focus, .filter-group input:focus { border-color: #6366f1; }
+        .filter-group input { min-width: 200px; }
+        .filter-actions { display: flex; gap: 8px; align-items: flex-end; }
+        .btn-clear { background: #334155; color: #94a3b8; border: none; padding: 7px 14px; border-radius: 7px; cursor: pointer; font-size: 0.82rem; font-weight: 500; transition: all 0.2s; }
+        .btn-clear:hover { background: #475569; color: #e2e8f0; }
+        .filter-count { font-size: 0.8rem; color: #64748b; align-self: flex-end; padding-bottom: 2px; }
 
         /* ── Table ── */
-        .table-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-        .table-card h3 { font-size: 0.9rem; font-weight: 600; color: #94a3b8; margin-bottom: 14px; }
+        .table-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 18px; margin-bottom: 22px; }
+        .table-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        .table-card-header h3 { font-size: 0.88rem; font-weight: 600; color: #94a3b8; }
+        .per-page-select { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 5px 8px; border-radius: 6px; font-size: 0.8rem; }
         .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { text-align: left; padding: 10px 12px; background: #0f172a; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; }
-        td { padding: 10px 12px; border-top: 1px solid #334155; vertical-align: top; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+        th { text-align: left; padding: 9px 12px; background: #0f172a; color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; cursor: pointer; user-select: none; white-space: nowrap; }
+        th:hover { color: #a78bfa; }
+        th .sort-icon { margin-left: 4px; opacity: 0.4; }
+        th.sort-asc .sort-icon::after { content: '▲'; opacity: 1; }
+        th.sort-desc .sort-icon::after { content: '▼'; opacity: 1; }
+        th .sort-icon::after { content: '⇅'; }
+        td { padding: 9px 12px; border-top: 1px solid #334155; vertical-align: top; }
         tr:hover td { background: rgba(99,102,241,0.05); }
-        .review-text { max-width: 300px; color: #94a3b8; line-height: 1.4; }
+        .review-text-cell { max-width: 340px; color: #94a3b8; line-height: 1.45; }
+        .review-text-cell.expanded { max-width: none; white-space: normal; }
+        .review-short { display: block; }
+        .review-full { display: none; }
+        .expand-btn { background: none; border: none; color: #6366f1; cursor: pointer; font-size: 0.75rem; padding: 0; margin-top: 3px; }
+
+        /* ── Pagination ── */
+        .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; flex-wrap: wrap; gap: 10px; }
+        .pagination-info { font-size: 0.8rem; color: #64748b; }
+        .pagination-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+        .page-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .page-btn:hover { border-color: #6366f1; color: #e2e8f0; }
+        .page-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+        .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
         /* ── Badges ── */
-        .badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; }
         .badge-positive { background: rgba(34,197,94,0.15); color: #22c55e; }
         .badge-neutral  { background: rgba(234,179,8,0.15);  color: #eab308; }
         .badge-negative { background: rgba(239,68,68,0.15);  color: #ef4444; }
@@ -132,37 +92,31 @@
         .badge-category { background: rgba(99,102,241,0.15); color: #a78bfa; }
         .badge-android  { background: rgba(34,197,94,0.15); color: #22c55e; }
         .badge-ios      { background: rgba(6,182,212,0.15); color: #06b6d4; }
+        .stars { color: #eab308; letter-spacing: 1px; font-size: 0.85rem; }
 
         /* ── Game Tabs ── */
-        .game-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
-        .tab-btn {
-            background: #1e293b; border: 1px solid #334155; color: #94a3b8;
-            padding: 8px 16px; border-radius: 8px; cursor: pointer;
-            font-size: 0.85rem; font-weight: 500; transition: all 0.2s;
-        }
+        .game-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .tab-btn { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 7px 14px; border-radius: 8px; cursor: pointer; font-size: 0.83rem; font-weight: 500; transition: all 0.2s; }
         .tab-btn:hover { border-color: #6366f1; color: #e2e8f0; }
         .tab-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
         .game-panel { display: none; }
         .game-panel.active { display: block; }
-        .game-header { margin-bottom: 18px; }
-        .game-header h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 14px; }
-        .game-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-
-        /* ── Stars ── */
-        .stars { color: #eab308; letter-spacing: 1px; }
+        .game-header { margin-bottom: 16px; }
+        .game-header h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; }
+        .game-stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
-            .header { padding: 14px 16px; }
-            .section { padding: 16px; }
+            .header { padding: 12px 16px; }
+            .section { padding: 14px 16px; }
             .nav { padding: 0 16px; }
             .charts-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
-<!-- ── Header ── -->
 <div class="header">
     <div>
         <h1>🎮 Game Reviews Dashboard</h1>
@@ -170,180 +124,174 @@
     </div>
     <div class="header-right">
         <div class="meta">{{ overall.total }} reviews · {{ games|length }} games</div>
-        <a href="/refresh" class="refresh-btn">🔄 Refresh Data</a>
+        <a href="/refresh" class="refresh-btn">🔄 Refresh</a>
     </div>
 </div>
 
-<!-- ── Nav ── -->
 <nav class="nav">
     <button class="nav-btn {% if not active_game %}active{% endif %}" onclick="switchSection('overview', this)">📊 Overview</button>
     <button class="nav-btn {% if active_game %}active{% endif %}" onclick="switchSection('games', this)">🎮 Per Game</button>
     <button class="nav-btn" onclick="switchSection('comparison', this)">📈 Comparison</button>
+    <button class="nav-btn" onclick="switchSection('allreviews', this)">📋 All Reviews</button>
 </nav>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
      OVERVIEW
 ══════════════════════════════════════════════════════════════════════════ -->
 <div class="section {% if not active_game %}active{% endif %}" id="section-overview">
-
     <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-number">{{ overall.total }}</div>
-            <div class="stat-label">Total Reviews</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ overall.avg_rating }}</div>
-            <div class="stat-label">Avg Rating</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ games|length }}</div>
-            <div class="stat-label">Games Tracked</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ overall.platform_dist.get('Android', 0) }}</div>
-            <div class="stat-label">Android</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ overall.platform_dist.get('iOS', 0) }}</div>
-            <div class="stat-label">iOS</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ overall.sentiment_dist.get('Positive', 0) }}</div>
-            <div class="stat-label">Positive</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ overall.sentiment_dist.get('Neutral', 0) }}</div>
-            <div class="stat-label">Neutral</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">{{ overall.sentiment_dist.get('Negative', 0) }}</div>
-            <div class="stat-label">Negative</div>
-        </div>
+        <div class="stat-card"><div class="stat-number">{{ overall.total }}</div><div class="stat-label">Total Reviews</div></div>
+        <div class="stat-card"><div class="stat-number">{{ overall.avg_rating }}</div><div class="stat-label">Avg Rating</div></div>
+        <div class="stat-card"><div class="stat-number">{{ games|length }}</div><div class="stat-label">Games</div></div>
+        <div class="stat-card"><div class="stat-number">{{ overall.platform_dist.get('Android', 0) }}</div><div class="stat-label">Android</div></div>
+        <div class="stat-card"><div class="stat-number">{{ overall.platform_dist.get('iOS', 0) }}</div><div class="stat-label">iOS</div></div>
+        <div class="stat-card"><div class="stat-number">{{ overall.sentiment_dist.get('Positive', 0) }}</div><div class="stat-label">Positive</div></div>
+        <div class="stat-card"><div class="stat-number">{{ overall.sentiment_dist.get('Neutral', 0) }}</div><div class="stat-label">Neutral</div></div>
+        <div class="stat-card"><div class="stat-number">{{ overall.sentiment_dist.get('Negative', 0) }}</div><div class="stat-label">Negative</div></div>
     </div>
-
     <div class="charts-grid">
-        <div class="chart-card">
-            <h3>⭐ Rating Distribution</h3>
-            <canvas id="overallRatingChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>💬 Sentiment Breakdown</h3>
-            <canvas id="overallSentimentChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>📱 Platform Split</h3>
-            <canvas id="overallPlatformChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>🏷️ Category Breakdown</h3>
-            <canvas id="overallCategoryChart"></canvas>
-        </div>
+        <div class="chart-card"><h3>⭐ Rating Distribution</h3><canvas id="overallRatingChart"></canvas></div>
+        <div class="chart-card"><h3>💬 Sentiment</h3><canvas id="overallSentimentChart"></canvas></div>
+        <div class="chart-card"><h3>📱 Platform Split</h3><canvas id="overallPlatformChart"></canvas></div>
+        <div class="chart-card"><h3>🏷️ Categories</h3><canvas id="overallCategoryChart"></canvas></div>
     </div>
-
-    <div class="chart-card-wide">
-        <h3>📅 Reviews Over Time (All Games)</h3>
-        <canvas id="overallMonthlyChart"></canvas>
-    </div>
-
+    <div class="chart-card-wide"><h3>📅 Reviews Over Time</h3><canvas id="overallMonthlyChart"></canvas></div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
      PER GAME
 ══════════════════════════════════════════════════════════════════════════ -->
 <div class="section {% if active_game %}active{% endif %}" id="section-games">
-
     <div class="game-tabs">
         {% for game in games %}
         <button class="tab-btn {% if loop.first and not active_game %}active{% endif %}{% if active_game == game %} active{% endif %}"
-                onclick="switchGame('game_{{ loop.index0 }}', this)">
-            {{ game }}
-        </button>
+                onclick="switchGame('game_{{ loop.index0 }}', this)">{{ game }}</button>
         {% endfor %}
     </div>
 
     {% for game in games %}
     {% set g = per_game[game] %}
     {% set gc = per_game_chart[game] %}
-    {% set revs = recent_reviews[game] %}
     <div class="game-panel {% if loop.first and not active_game %}active{% endif %}{% if active_game == game %} active{% endif %}"
          id="game_{{ loop.index0 }}">
 
         <div class="game-header">
             <h2>🎮 {{ game }}</h2>
             <div class="game-stats-row">
-                <div class="stat-card">
-                    <div class="stat-number">{{ g.total }}</div>
-                    <div class="stat-label">Reviews</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ g.avg_rating }}</div>
-                    <div class="stat-label">Avg Rating</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ g.platform_dist.get('Android', 0) }}</div>
-                    <div class="stat-label">Android</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ g.platform_dist.get('iOS', 0) }}</div>
-                    <div class="stat-label">iOS</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ g.sentiment_dist.get('Positive', 0) }}</div>
-                    <div class="stat-label">Positive</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ g.sentiment_dist.get('Negative', 0) }}</div>
-                    <div class="stat-label">Negative</div>
-                </div>
+                <div class="stat-card"><div class="stat-number">{{ g.total }}</div><div class="stat-label">Reviews</div></div>
+                <div class="stat-card"><div class="stat-number">{{ g.avg_rating }}</div><div class="stat-label">Avg Rating</div></div>
+                <div class="stat-card"><div class="stat-number">{{ g.platform_dist.get('Android', 0) }}</div><div class="stat-label">Android</div></div>
+                <div class="stat-card"><div class="stat-number">{{ g.platform_dist.get('iOS', 0) }}</div><div class="stat-label">iOS</div></div>
+                <div class="stat-card"><div class="stat-number">{{ g.sentiment_dist.get('Positive', 0) }}</div><div class="stat-label">Positive</div></div>
+                <div class="stat-card"><div class="stat-number">{{ g.sentiment_dist.get('Neutral', 0) }}</div><div class="stat-label">Neutral</div></div>
+                <div class="stat-card"><div class="stat-number">{{ g.sentiment_dist.get('Negative', 0) }}</div><div class="stat-label">Negative</div></div>
             </div>
         </div>
 
         <div class="charts-grid">
-            <div class="chart-card">
-                <h3>⭐ Rating Distribution</h3>
-                <canvas id="ratingChart_{{ loop.index0 }}"></canvas>
-            </div>
-            <div class="chart-card">
-                <h3>💬 Sentiment</h3>
-                <canvas id="sentimentChart_{{ loop.index0 }}"></canvas>
-            </div>
-            <div class="chart-card">
-                <h3>🏷️ Categories</h3>
-                <canvas id="categoryChart_{{ loop.index0 }}"></canvas>
-            </div>
-            <div class="chart-card">
-                <h3>📅 Reviews Over Time</h3>
-                <canvas id="monthlyChart_{{ loop.index0 }}"></canvas>
-            </div>
+            <div class="chart-card"><h3>⭐ Rating Distribution</h3><canvas id="ratingChart_{{ loop.index0 }}"></canvas></div>
+            <div class="chart-card"><h3>💬 Sentiment</h3><canvas id="sentimentChart_{{ loop.index0 }}"></canvas></div>
+            <div class="chart-card"><h3>🏷️ Categories</h3><canvas id="categoryChart_{{ loop.index0 }}"></canvas></div>
+            <div class="chart-card"><h3>📅 Over Time</h3><canvas id="monthlyChart_{{ loop.index0 }}"></canvas></div>
         </div>
 
-        <div class="table-card">
-            <h3>📝 Recent Reviews</h3>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Platform</th>
-                            <th>Rating</th>
-                            <th>Sentiment</th>
-                            <th>Category</th>
-                            <th>Review</th>
-                            <th>Month</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for rev in revs %}
-                        <tr>
-                            <td><span class="badge badge-{{ rev.platform | lower }}">{{ rev.platform }}</span></td>
-                            <td><span class="stars">{{ '★' * (rev.rating | int) }}</span></td>
-                            <td><span class="badge badge-{{ rev.sentiment | lower }}">{{ rev.sentiment }}</span></td>
-                            <td><span class="badge badge-category">{{ rev.category }}</span></td>
-                            <td class="review-text">{{ rev.review_text | truncate(130, True, '…') }}</td>
-                            <td>{{ rev.month }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <!-- Per-game reviews table with filters -->
+        <div id="gameReviewsContainer_{{ loop.index0 }}">
+            <div class="filter-bar">
+                <div class="filter-group">
+                    <label>Platform</label>
+                    <select onchange="filterGameReviews({{ loop.index0 }})">
+                        <option value="">All</option>
+                        <option value="Android">Android</option>
+                        <option value="iOS">iOS</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Rating</label>
+                    <select onchange="filterGameReviews({{ loop.index0 }})">
+                        <option value="">All</option>
+                        <option value="5">5★</option>
+                        <option value="4">4★</option>
+                        <option value="3">3★</option>
+                        <option value="2">2★</option>
+                        <option value="1">1★</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Sentiment</label>
+                    <select onchange="filterGameReviews({{ loop.index0 }})">
+                        <option value="">All</option>
+                        <option value="Positive">Positive</option>
+                        <option value="Neutral">Neutral</option>
+                        <option value="Negative">Negative</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select onchange="filterGameReviews({{ loop.index0 }})">
+                        <option value="">All</option>
+                        <option value="Bug">Bug</option>
+                        <option value="Ads">Ads</option>
+                        <option value="Difficulty">Difficulty</option>
+                        <option value="Levels">Levels</option>
+                        <option value="Feature Request">Feature Request</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Search</label>
+                    <input type="text" placeholder="Search reviews…" oninput="filterGameReviews({{ loop.index0 }})">
+                </div>
+                <div class="filter-actions">
+                    <button class="btn-clear" onclick="clearGameFilters({{ loop.index0 }})">Clear</button>
+                    <span class="filter-count" id="gameCount_{{ loop.index0 }}"></span>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <div class="table-card-header">
+                    <h3>📝 Reviews</h3>
+                    <select class="per-page-select" onchange="filterGameReviews({{ loop.index0 }})">
+                        <option value="25">25 per page</option>
+                        <option value="50">50 per page</option>
+                        <option value="100">100 per page</option>
+                        <option value="9999">All</option>
+                    </select>
+                </div>
+                <div class="table-wrapper">
+                    <table id="gameTable_{{ loop.index0 }}">
+                        <thead>
+                            <tr>
+                                <th onclick="sortGameTable({{ loop.index0 }}, 0)">Platform<span class="sort-icon"></span></th>
+                                <th onclick="sortGameTable({{ loop.index0 }}, 1)">Rating<span class="sort-icon"></span></th>
+                                <th onclick="sortGameTable({{ loop.index0 }}, 2)">Sentiment<span class="sort-icon"></span></th>
+                                <th onclick="sortGameTable({{ loop.index0 }}, 3)">Category<span class="sort-icon"></span></th>
+                                <th>Review</th>
+                                <th onclick="sortGameTable({{ loop.index0 }}, 5)">Month<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rev in per_game_reviews[game] %}
+                            <tr data-platform="{{ rev.platform }}" data-rating="{{ rev.rating | int }}" data-sentiment="{{ rev.sentiment }}" data-category="{{ rev.category }}" data-text="{{ rev.review_text | lower }}">
+                                <td><span class="badge badge-{{ rev.platform | lower }}">{{ rev.platform }}</span></td>
+                                <td data-val="{{ rev.rating }}"><span class="stars">{{ '★' * (rev.rating | int) }}</span></td>
+                                <td><span class="badge badge-{{ rev.sentiment | lower }}">{{ rev.sentiment }}</span></td>
+                                <td><span class="badge badge-category">{{ rev.category }}</span></td>
+                                <td class="review-text-cell">
+                                    {% if rev.review_text | length > 120 %}
+                                    <span class="review-short">{{ rev.review_text[:120] }}… <button class="expand-btn" onclick="toggleReview(this)">more</button></span>
+                                    <span class="review-full">{{ rev.review_text }} <button class="expand-btn" onclick="toggleReview(this)">less</button></span>
+                                    {% else %}
+                                    {{ rev.review_text }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ rev.month }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="gamePagination_{{ loop.index0 }}"></div>
             </div>
         </div>
 
@@ -357,100 +305,39 @@
             var months    = {{ gc.monthly_labels | tojson }};
             var mv        = {{ gc.monthly_values | tojson }};
 
-            new Chart(document.getElementById('ratingChart_' + idx), {
-                type: 'bar',
-                data: {
-                    labels: ['1★','2★','3★','4★','5★'],
-                    datasets: [{ label: 'Reviews', data: rd,
-                        backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
-                        borderRadius: 6 }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-            });
+            new Chart(document.getElementById('ratingChart_' + idx), { type: 'bar', data: { labels: ['1★','2★','3★','4★','5★'], datasets: [{ label: 'Reviews', data: rd, backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'], borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+            new Chart(document.getElementById('sentimentChart_' + idx), { type: 'doughnut', data: { labels: ['Positive','Neutral','Negative','Unknown'], datasets: [{ data: sd, backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'], borderWidth: 2, borderColor: '#1e293b' }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+            new Chart(document.getElementById('categoryChart_' + idx), { type: 'bar', data: { labels: catLabels, datasets: [{ label: 'Reviews', data: catVals, backgroundColor: '#6366f1', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+            new Chart(document.getElementById('monthlyChart_' + idx), { type: 'line', data: { labels: months, datasets: [{ label: 'Reviews', data: mv, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.15)', fill: true, tension: 0.4, pointRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
-            new Chart(document.getElementById('sentimentChart_' + idx), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Positive','Neutral','Negative','Unknown'],
-                    datasets: [{ data: sd,
-                        backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
-                        borderWidth: 2, borderColor: '#1e293b' }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-            });
-
-            new Chart(document.getElementById('categoryChart_' + idx), {
-                type: 'bar',
-                data: {
-                    labels: catLabels,
-                    datasets: [{ label: 'Reviews', data: catVals, backgroundColor: '#6366f1', borderRadius: 6 }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-            });
-
-            new Chart(document.getElementById('monthlyChart_' + idx), {
-                type: 'line',
-                data: {
-                    labels: months,
-                    datasets: [{ label: 'Reviews', data: mv,
-                        borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.15)',
-                        fill: true, tension: 0.4, pointRadius: 4 }]
-                },
-                options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-            });
+            // Init pagination for this game table
+            initGameTable(idx);
         })();
         </script>
     </div>
     {% endfor %}
-
 </div>
 
 <!-- ══════════════════════════════════════════════════════════════════════════
      COMPARISON
 ══════════════════════════════════════════════════════════════════════════ -->
 <div class="section" id="section-comparison">
-
     <div class="charts-grid">
-        <div class="chart-card">
-            <h3>📊 Total Reviews by Game</h3>
-            <canvas id="compTotalChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>⭐ Avg Rating by Game</h3>
-            <canvas id="compAvgChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>😊 Positive Reviews by Game</h3>
-            <canvas id="compPositiveChart"></canvas>
-        </div>
-        <div class="chart-card">
-            <h3>😠 Negative Reviews by Game</h3>
-            <canvas id="compNegativeChart"></canvas>
-        </div>
+        <div class="chart-card"><h3>📊 Total Reviews by Game</h3><canvas id="compTotalChart"></canvas></div>
+        <div class="chart-card"><h3>⭐ Avg Rating by Game</h3><canvas id="compAvgChart"></canvas></div>
+        <div class="chart-card"><h3>😊 Positive by Game</h3><canvas id="compPositiveChart"></canvas></div>
+        <div class="chart-card"><h3>😠 Negative by Game</h3><canvas id="compNegativeChart"></canvas></div>
     </div>
-
     <div class="table-card">
-        <h3>📋 Game Comparison Table</h3>
+        <div class="table-card-header"><h3>📋 Game Comparison</h3></div>
         <div class="table-wrapper">
             <table>
-                <thead>
-                    <tr>
-                        <th>Game</th>
-                        <th>Total</th>
-                        <th>Avg Rating</th>
-                        <th>Android</th>
-                        <th>iOS</th>
-                        <th>Positive</th>
-                        <th>Neutral</th>
-                        <th>Negative</th>
-                        <th>Top Category</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>Game</th><th>Total</th><th>Avg Rating</th><th>Android</th><th>iOS</th><th>Positive</th><th>Neutral</th><th>Negative</th><th>Top Category</th></tr></thead>
                 <tbody>
                     {% for game in games %}
                     {% set g = per_game[game] %}
                     <tr>
-                        <td style="font-weight:600; color:#e2e8f0;">{{ game }}</td>
+                        <td style="font-weight:600;color:#e2e8f0;">{{ game }}</td>
                         <td>{{ g.total }}</td>
                         <td><span class="stars">{{ '★' * (g.avg_rating | int) }}</span> {{ g.avg_rating }}</td>
                         <td>{{ g.platform_dist.get('Android', 0) }}</td>
@@ -458,19 +345,125 @@
                         <td><span class="badge badge-positive">{{ g.sentiment_dist.get('Positive', 0) }}</span></td>
                         <td><span class="badge badge-neutral">{{ g.sentiment_dist.get('Neutral', 0) }}</span></td>
                         <td><span class="badge badge-negative">{{ g.sentiment_dist.get('Negative', 0) }}</span></td>
-                        <td>
-                            {% if g.category_dist %}
-                            {% set top_cat = g.category_dist | dictsort(by='value') | reverse | first %}
-                            <span class="badge badge-category">{{ top_cat[0] }}</span>
-                            {% else %}—{% endif %}
-                        </td>
+                        <td>{% if g.category_dist %}{% set top_cat = g.category_dist | dictsort(by='value') | reverse | first %}<span class="badge badge-category">{{ top_cat[0] }}</span>{% else %}—{% endif %}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 
+<!-- ══════════════════════════════════════════════════════════════════════════
+     ALL REVIEWS
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="section-allreviews">
+
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label>Game</label>
+            <select id="allFilter_game" onchange="filterAllReviews()">
+                <option value="">All Games</option>
+                {% for game in games %}<option value="{{ game }}">{{ game }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Platform</label>
+            <select id="allFilter_platform" onchange="filterAllReviews()">
+                <option value="">All</option>
+                <option value="Android">Android</option>
+                <option value="iOS">iOS</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Rating</label>
+            <select id="allFilter_rating" onchange="filterAllReviews()">
+                <option value="">All</option>
+                <option value="5">5★</option>
+                <option value="4">4★</option>
+                <option value="3">3★</option>
+                <option value="2">2★</option>
+                <option value="1">1★</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Sentiment</label>
+            <select id="allFilter_sentiment" onchange="filterAllReviews()">
+                <option value="">All</option>
+                <option value="Positive">Positive</option>
+                <option value="Neutral">Neutral</option>
+                <option value="Negative">Negative</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Category</label>
+            <select id="allFilter_category" onchange="filterAllReviews()">
+                <option value="">All</option>
+                <option value="Bug">Bug</option>
+                <option value="Ads">Ads</option>
+                <option value="Difficulty">Difficulty</option>
+                <option value="Levels">Levels</option>
+                <option value="Feature Request">Feature Request</option>
+                <option value="General">General</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>Search</label>
+            <input type="text" id="allFilter_search" placeholder="Search review text…" oninput="filterAllReviews()">
+        </div>
+        <div class="filter-actions">
+            <button class="btn-clear" onclick="clearAllFilters()">Clear</button>
+            <span class="filter-count" id="allCount"></span>
+        </div>
+    </div>
+
+    <div class="table-card">
+        <div class="table-card-header">
+            <h3>📋 All Reviews</h3>
+            <select class="per-page-select" id="allPerPage" onchange="filterAllReviews()">
+                <option value="25">25 per page</option>
+                <option value="50">50 per page</option>
+                <option value="100">100 per page</option>
+                <option value="9999">All</option>
+            </select>
+        </div>
+        <div class="table-wrapper">
+            <table id="allTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortAllTable(0)">Game<span class="sort-icon"></span></th>
+                        <th onclick="sortAllTable(1)">Platform<span class="sort-icon"></span></th>
+                        <th onclick="sortAllTable(2)">Rating<span class="sort-icon"></span></th>
+                        <th onclick="sortAllTable(3)">Sentiment<span class="sort-icon"></span></th>
+                        <th onclick="sortAllTable(4)">Category<span class="sort-icon"></span></th>
+                        <th>Review</th>
+                        <th onclick="sortAllTable(6)">Month<span class="sort-icon"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="allTableBody">
+                    {% for rev in all_reviews %}
+                    <tr data-game="{{ rev.app_name }}" data-platform="{{ rev.platform }}" data-rating="{{ rev.rating | int }}" data-sentiment="{{ rev.sentiment }}" data-category="{{ rev.category }}" data-text="{{ rev.review_text | lower }}">
+                        <td>{{ rev.app_name }}</td>
+                        <td><span class="badge badge-{{ rev.platform | lower }}">{{ rev.platform }}</span></td>
+                        <td data-val="{{ rev.rating }}"><span class="stars">{{ '★' * (rev.rating | int) }}</span></td>
+                        <td><span class="badge badge-{{ rev.sentiment | lower }}">{{ rev.sentiment }}</span></td>
+                        <td><span class="badge badge-category">{{ rev.category }}</span></td>
+                        <td class="review-text-cell">
+                            {% if rev.review_text | length > 120 %}
+                            <span class="review-short">{{ rev.review_text[:120] }}… <button class="expand-btn" onclick="toggleReview(this)">more</button></span>
+                            <span class="review-full">{{ rev.review_text }} <button class="expand-btn" onclick="toggleReview(this)">less</button></span>
+                            {% else %}
+                            {{ rev.review_text }}
+                            {% endif %}
+                        </td>
+                        <td>{{ rev.month }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination" id="allPagination"></div>
+    </div>
 </div>
 
 <!-- ── Scripts ── -->
@@ -483,7 +476,6 @@ function switchSection(id, btn) {
     btn.classList.add('active');
 }
 
-// ── Game tab navigation ──────────────────────────────────────────────────────
 function switchGame(panelId, btn) {
     document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -491,7 +483,217 @@ function switchGame(panelId, btn) {
     btn.classList.add('active');
 }
 
-// ── Overall Charts ───────────────────────────────────────────────────────────
+function toggleReview(btn) {
+    var cell = btn.closest('.review-text-cell');
+    var short = cell.querySelector('.review-short');
+    var full  = cell.querySelector('.review-full');
+    if (short.style.display === 'none') {
+        short.style.display = ''; full.style.display = 'none';
+    } else {
+        short.style.display = 'none'; full.style.display = '';
+    }
+}
+
+// ── Generic table pagination/filter engine ──────────────────────────────────
+var tableStates = {};
+
+function getTableState(id) {
+    if (!tableStates[id]) tableStates[id] = { page: 1, perPage: 25, sortCol: -1, sortDir: 1, filtered: [] };
+    return tableStates[id];
+}
+
+function renderPagination(containerId, state, total) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    var perPage = state.perPage >= 9999 ? total : state.perPage;
+    var pages = Math.ceil(total / perPage) || 1;
+    var html = '<div class="pagination-info">Showing ' + Math.min((state.page-1)*perPage+1, total) + '–' + Math.min(state.page*perPage, total) + ' of ' + total + '</div>';
+    html += '<div class="pagination-btns">';
+    html += '<button class="page-btn" onclick="' + state.onPage + '(' + (state.page-1) + ')" ' + (state.page<=1?'disabled':'') + '>‹</button>';
+    var start = Math.max(1, state.page-2), end = Math.min(pages, state.page+2);
+    if (start > 1) html += '<button class="page-btn" onclick="' + state.onPage + '(1)">1</button>' + (start>2?'<span style="color:#64748b;padding:0 4px">…</span>':'');
+    for (var p = start; p <= end; p++) html += '<button class="page-btn' + (p===state.page?' active':'') + '" onclick="' + state.onPage + '(' + p + ')">' + p + '</button>';
+    if (end < pages) html += (end<pages-1?'<span style="color:#64748b;padding:0 4px">…</span>':'') + '<button class="page-btn" onclick="' + state.onPage + '(' + pages + ')">' + pages + '</button>';
+    html += '<button class="page-btn" onclick="' + state.onPage + '(' + (state.page+1) + ')" ' + (state.page>=pages?'disabled':'') + '>›</button>';
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function applyTablePage(rows, state) {
+    var perPage = state.perPage >= 9999 ? rows.length : state.perPage;
+    var start = (state.page - 1) * perPage;
+    rows.forEach(function(r, i) { r.style.display = (i >= start && i < start + perPage) ? '' : 'none'; });
+}
+
+// ── All Reviews table ────────────────────────────────────────────────────────
+var allState = { page: 1, perPage: 25, sortCol: -1, sortDir: 1, onPage: 'goAllPage' };
+var allRows = [];
+
+window.onload = function() {
+    allRows = Array.from(document.querySelectorAll('#allTableBody tr'));
+    filterAllReviews();
+    initAllGameTables();
+};
+
+function filterAllReviews() {
+    var game      = document.getElementById('allFilter_game').value;
+    var platform  = document.getElementById('allFilter_platform').value;
+    var rating    = document.getElementById('allFilter_rating').value;
+    var sentiment = document.getElementById('allFilter_sentiment').value;
+    var category  = document.getElementById('allFilter_category').value;
+    var search    = document.getElementById('allFilter_search').value.toLowerCase();
+    var perPage   = parseInt(document.getElementById('allPerPage').value);
+    allState.perPage = perPage;
+    allState.page = 1;
+
+    var filtered = allRows.filter(function(r) {
+        if (game      && r.dataset.game      !== game)      return false;
+        if (platform  && r.dataset.platform  !== platform)  return false;
+        if (rating    && r.dataset.rating    !== rating)    return false;
+        if (sentiment && r.dataset.sentiment !== sentiment) return false;
+        if (category  && r.dataset.category  !== category)  return false;
+        if (search    && !r.dataset.text.includes(search))  return false;
+        return true;
+    });
+
+    // Sort
+    if (allState.sortCol >= 0) {
+        filtered.sort(function(a, b) {
+            var av = a.cells[allState.sortCol].dataset.val || a.cells[allState.sortCol].textContent.trim();
+            var bv = b.cells[allState.sortCol].dataset.val || b.cells[allState.sortCol].textContent.trim();
+            var n = parseFloat(av) - parseFloat(bv);
+            return isNaN(n) ? av.localeCompare(bv) * allState.sortDir : n * allState.sortDir;
+        });
+    }
+
+    allState.filtered = filtered;
+    allRows.forEach(function(r) { r.style.display = 'none'; });
+    var tbody = document.getElementById('allTableBody');
+    filtered.forEach(function(r) { tbody.appendChild(r); });
+    applyTablePage(filtered, allState);
+    renderPagination('allPagination', allState, filtered.length);
+    document.getElementById('allCount').textContent = filtered.length + ' results';
+}
+
+function goAllPage(p) {
+    var perPage = allState.perPage >= 9999 ? allState.filtered.length : allState.perPage;
+    var pages = Math.ceil(allState.filtered.length / perPage) || 1;
+    allState.page = Math.max(1, Math.min(p, pages));
+    applyTablePage(allState.filtered, allState);
+    renderPagination('allPagination', allState, allState.filtered.length);
+}
+
+function sortAllTable(col) {
+    var th = document.querySelectorAll('#allTable thead th');
+    th.forEach(function(h, i) { h.classList.remove('sort-asc','sort-desc'); });
+    if (allState.sortCol === col) { allState.sortDir *= -1; }
+    else { allState.sortCol = col; allState.sortDir = 1; }
+    th[col].classList.add(allState.sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    filterAllReviews();
+}
+
+function clearAllFilters() {
+    document.getElementById('allFilter_game').value = '';
+    document.getElementById('allFilter_platform').value = '';
+    document.getElementById('allFilter_rating').value = '';
+    document.getElementById('allFilter_sentiment').value = '';
+    document.getElementById('allFilter_category').value = '';
+    document.getElementById('allFilter_search').value = '';
+    filterAllReviews();
+}
+
+// ── Per-game tables ──────────────────────────────────────────────────────────
+var gameTableStates = {};
+
+function initAllGameTables() {
+    document.querySelectorAll('[id^="gameTable_"]').forEach(function(tbl) {
+        var idx = tbl.id.replace('gameTable_', '');
+        initGameTable(parseInt(idx));
+    });
+}
+
+function initGameTable(idx) {
+    gameTableStates[idx] = { page: 1, perPage: 25, sortCol: -1, sortDir: 1, filtered: [] };
+    filterGameReviews(idx);
+}
+
+function filterGameReviews(idx) {
+    var container = document.getElementById('gameReviewsContainer_' + idx);
+    if (!container) return;
+    var selects = container.querySelectorAll('select');
+    var platform  = selects[0].value;
+    var rating    = selects[1].value;
+    var sentiment = selects[2].value;
+    var category  = selects[3].value;
+    var perPage   = parseInt(selects[4].value);
+    var search    = container.querySelector('input[type="text"]').value.toLowerCase();
+
+    var state = gameTableStates[idx] || { page: 1, perPage: 25, sortCol: -1, sortDir: 1, filtered: [] };
+    state.perPage = perPage;
+    state.page = 1;
+    gameTableStates[idx] = state;
+
+    var rows = Array.from(document.querySelectorAll('#gameTable_' + idx + ' tbody tr'));
+    var filtered = rows.filter(function(r) {
+        if (platform  && r.dataset.platform  !== platform)  return false;
+        if (rating    && r.dataset.rating    !== rating)    return false;
+        if (sentiment && r.dataset.sentiment !== sentiment) return false;
+        if (category  && r.dataset.category  !== category)  return false;
+        if (search    && !r.dataset.text.includes(search))  return false;
+        return true;
+    });
+
+    if (state.sortCol >= 0) {
+        filtered.sort(function(a, b) {
+            var av = a.cells[state.sortCol].dataset.val || a.cells[state.sortCol].textContent.trim();
+            var bv = b.cells[state.sortCol].dataset.val || b.cells[state.sortCol].textContent.trim();
+            var n = parseFloat(av) - parseFloat(bv);
+            return isNaN(n) ? av.localeCompare(bv) * state.sortDir : n * state.sortDir;
+        });
+    }
+
+    state.filtered = filtered;
+    rows.forEach(function(r) { r.style.display = 'none'; });
+    var tbody = document.querySelector('#gameTable_' + idx + ' tbody');
+    filtered.forEach(function(r) { tbody.appendChild(r); });
+    applyTablePage(filtered, state);
+
+    var paginationState = Object.assign({}, state, { onPage: 'goGamePage_' + idx });
+    renderPagination('gamePagination_' + idx, paginationState, filtered.length);
+
+    var countEl = document.getElementById('gameCount_' + idx);
+    if (countEl) countEl.textContent = filtered.length + ' results';
+
+    // Create named page function
+    window['goGamePage_' + idx] = function(p) {
+        var s = gameTableStates[idx];
+        var pp = s.perPage >= 9999 ? s.filtered.length : s.perPage;
+        var pages = Math.ceil(s.filtered.length / pp) || 1;
+        s.page = Math.max(1, Math.min(p, pages));
+        applyTablePage(s.filtered, s);
+        var ps = Object.assign({}, s, { onPage: 'goGamePage_' + idx });
+        renderPagination('gamePagination_' + idx, ps, s.filtered.length);
+    };
+}
+
+function sortGameTable(idx, col) {
+    var th = document.querySelectorAll('#gameTable_' + idx + ' thead th');
+    th.forEach(function(h) { h.classList.remove('sort-asc','sort-desc'); });
+    var state = gameTableStates[idx];
+    if (state.sortCol === col) { state.sortDir *= -1; }
+    else { state.sortCol = col; state.sortDir = 1; }
+    th[col].classList.add(state.sortDir === 1 ? 'sort-asc' : 'sort-desc');
+    filterGameReviews(idx);
+}
+
+function clearGameFilters(idx) {
+    var container = document.getElementById('gameReviewsContainer_' + idx);
+    container.querySelectorAll('select').forEach(function(s) { s.value = s.options[0].value; });
+    container.querySelector('input[type="text"]').value = '';
+    filterGameReviews(idx);
+}
+
+// ── Overview Charts ───────────────────────────────────────────────────────────
 var overallRd        = {{ overall_chart.rating_dist | tojson }};
 var overallSd        = {{ overall_chart.sentiment_dist | tojson }};
 var overallCatLabels = {{ overall_chart.category_labels | tojson }};
@@ -501,58 +703,11 @@ var overallMv        = {{ overall_chart.monthly_values | tojson }};
 var overallPlatLabels = {{ overall_chart.platform_labels | tojson }};
 var overallPlatVals   = {{ overall_chart.platform_values | tojson }};
 
-new Chart(document.getElementById('overallRatingChart'), {
-    type: 'bar',
-    data: {
-        labels: ['1★','2★','3★','4★','5★'],
-        datasets: [{ label: 'Reviews', data: overallRd,
-            backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'],
-            borderRadius: 6 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-});
-
-new Chart(document.getElementById('overallSentimentChart'), {
-    type: 'doughnut',
-    data: {
-        labels: ['Positive','Neutral','Negative','Unknown'],
-        datasets: [{ data: overallSd,
-            backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'],
-            borderWidth: 2, borderColor: '#1e293b' }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-});
-
-new Chart(document.getElementById('overallPlatformChart'), {
-    type: 'doughnut',
-    data: {
-        labels: overallPlatLabels,
-        datasets: [{ data: overallPlatVals,
-            backgroundColor: ['#6366f1','#06b6d4','#f97316','#22c55e'],
-            borderWidth: 2, borderColor: '#1e293b' }]
-    },
-    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-});
-
-new Chart(document.getElementById('overallCategoryChart'), {
-    type: 'bar',
-    data: {
-        labels: overallCatLabels,
-        datasets: [{ label: 'Reviews', data: overallCatVals, backgroundColor: '#6366f1', borderRadius: 6 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-});
-
-new Chart(document.getElementById('overallMonthlyChart'), {
-    type: 'line',
-    data: {
-        labels: overallMonths,
-        datasets: [{ label: 'Reviews', data: overallMv,
-            borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.15)',
-            fill: true, tension: 0.4, pointRadius: 4 }]
-    },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-});
+new Chart(document.getElementById('overallRatingChart'), { type: 'bar', data: { labels: ['1★','2★','3★','4★','5★'], datasets: [{ label: 'Reviews', data: overallRd, backgroundColor: ['#ef4444','#f97316','#eab308','#84cc16','#22c55e'], borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+new Chart(document.getElementById('overallSentimentChart'), { type: 'doughnut', data: { labels: ['Positive','Neutral','Negative','Unknown'], datasets: [{ data: overallSd, backgroundColor: ['#22c55e','#eab308','#ef4444','#94a3b8'], borderWidth: 2, borderColor: '#1e293b' }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+new Chart(document.getElementById('overallPlatformChart'), { type: 'doughnut', data: { labels: overallPlatLabels, datasets: [{ data: overallPlatVals, backgroundColor: ['#6366f1','#06b6d4','#f97316','#22c55e'], borderWidth: 2, borderColor: '#1e293b' }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+new Chart(document.getElementById('overallCategoryChart'), { type: 'bar', data: { labels: overallCatLabels, datasets: [{ label: 'Reviews', data: overallCatVals, backgroundColor: '#6366f1', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+new Chart(document.getElementById('overallMonthlyChart'), { type: 'line', data: { labels: overallMonths, datasets: [{ label: 'Reviews', data: overallMv, borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.15)', fill: true, tension: 0.4, pointRadius: 4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 
 // ── Comparison Charts ────────────────────────────────────────────────────────
 var gameNames  = {{ games | tojson }};
@@ -561,29 +716,10 @@ var gameAvgs   = {{ game_avgs | tojson }};
 var gamePos    = {{ game_positive | tojson }};
 var gameNeg    = {{ game_negative | tojson }};
 
-new Chart(document.getElementById('compTotalChart'), {
-    type: 'bar',
-    data: { labels: gameNames, datasets: [{ label: 'Total', data: gameTotals, backgroundColor: '#6366f1', borderRadius: 6 }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-});
-
-new Chart(document.getElementById('compAvgChart'), {
-    type: 'bar',
-    data: { labels: gameNames, datasets: [{ label: 'Avg Rating', data: gameAvgs, backgroundColor: '#22c55e', borderRadius: 6 }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false, min: 0, max: 5 } } }
-});
-
-new Chart(document.getElementById('compPositiveChart'), {
-    type: 'bar',
-    data: { labels: gameNames, datasets: [{ label: 'Positive', data: gamePos, backgroundColor: '#22c55e', borderRadius: 6 }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-});
-
-new Chart(document.getElementById('compNegativeChart'), {
-    type: 'bar',
-    data: { labels: gameNames, datasets: [{ label: 'Negative', data: gameNeg, backgroundColor: '#ef4444', borderRadius: 6 }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-});
+new Chart(document.getElementById('compTotalChart'), { type: 'bar', data: { labels: gameNames, datasets: [{ label: 'Total', data: gameTotals, backgroundColor: '#6366f1', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+new Chart(document.getElementById('compAvgChart'), { type: 'bar', data: { labels: gameNames, datasets: [{ label: 'Avg Rating', data: gameAvgs, backgroundColor: '#22c55e', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false, min: 0, max: 5 } } } });
+new Chart(document.getElementById('compPositiveChart'), { type: 'bar', data: { labels: gameNames, datasets: [{ label: 'Positive', data: gamePos, backgroundColor: '#22c55e', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+new Chart(document.getElementById('compNegativeChart'), { type: 'bar', data: { labels: gameNames, datasets: [{ label: 'Negative', data: gameNeg, backgroundColor: '#ef4444', borderRadius: 6 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
 </script>
 
 </body>

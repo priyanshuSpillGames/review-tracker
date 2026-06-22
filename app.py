@@ -136,11 +136,14 @@ def fetch_data():
     games   = sorted(set(r["app_name"] for r in reviews_rows))
 
     per_game = {}
-    recent_reviews = {}
+    per_game_reviews = {}
     for game in games:
         game_rows = [r for r in reviews_rows if r["app_name"] == game]
         per_game[game] = aggregate(game_rows)
-        recent_reviews[game] = sorted(game_rows, key=lambda x: x["month"], reverse=True)[:15]
+        per_game_reviews[game] = sorted(game_rows, key=lambda x: x["month"], reverse=True)
+
+    # All reviews sorted newest first (for the All Reviews tab)
+    all_reviews_sorted = sorted(reviews_rows, key=lambda x: x["month"], reverse=True)
 
     # ── Pre-compute chart data for Jinja2 ─────────────────────────────────────
     def chart_data(agg):
@@ -167,17 +170,18 @@ def fetch_data():
     game_negative = [per_game[g]["sentiment_dist"].get("Negative", 0) for g in games]
 
     return {
-        "overall":        overall,
-        "games":          games,
-        "per_game":       per_game,
-        "recent_reviews": recent_reviews,
-        "overall_chart":  overall_chart,
-        "per_game_chart": per_game_chart,
-        "game_totals":    game_totals,
-        "game_avgs":      game_avgs,
-        "game_positive":  game_positive,
-        "game_negative":  game_negative,
-        "last_updated":   datetime.now().strftime("%B %d, %Y at %I:%M %p"),
+        "overall":          overall,
+        "games":            games,
+        "per_game":         per_game,
+        "per_game_reviews": per_game_reviews,
+        "all_reviews":      all_reviews_sorted,
+        "overall_chart":    overall_chart,
+        "per_game_chart":   per_game_chart,
+        "game_totals":      game_totals,
+        "game_avgs":        game_avgs,
+        "game_positive":    game_positive,
+        "game_negative":    game_negative,
+        "last_updated":     datetime.now().strftime("%B %d, %Y at %I:%M %p"),
     }
 
 
